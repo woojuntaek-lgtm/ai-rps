@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#3b2a7a">
+<meta name="description" content="내 패턴을 학습해 다음 수를 예측하는 AI와 가위바위보 30판 대결. 머신러닝의 기본 원리를 1분 만에 체험하세요.">
+<title>나를 읽는 AI 가위바위보</title>
+<style>
+:root{--bg:#f4f2fb;--card:#fff;--ink:#211b33;--dim:#6e6785;--line:#e2ddf0;--pri:#4c35a8;--pri2:#ece8fb;--win:#16a34a;--lose:#dc2626;--draw:#9ca3af;--r:18px}
+@media (prefers-color-scheme:dark){:root{--bg:#13111b;--card:#1d1a28;--ink:#ece8f7;--dim:#a49dbb;--line:#312c42;--pri:#a995ff;--pri2:#2a2442;--win:#4ade80;--lose:#f87171}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif}
+header{padding:calc(12px + env(safe-area-inset-top)) 16px 2px;max-width:560px;margin:0 auto}
+header h1{margin:0;font-size:19px;color:var(--pri)}header p{margin:0;font-size:12.5px;color:var(--dim)}
+main{max-width:560px;margin:0 auto;padding:8px 12px 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer;min-height:50px}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}@media (prefers-color-scheme:dark){.btn.pri{color:#14102a}}
+.btn.wide{width:100%}.mt{margin-top:10px}.dim{color:var(--dim)}.small{font-size:12.5px}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;padding:10px 4px;font:inherit;color:var(--dim);cursor:pointer}
+.seg button.on{background:var(--pri2);color:var(--pri);font-weight:700}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center;gap:6px}
+.score b{display:block;font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums}
+.score span{font-size:12px;color:var(--dim)}
+.score .mid{font-size:12.5px;color:var(--dim)}
+.prog{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:10px}.prog i{display:block;height:100%;background:var(--pri);transition:width .25s}
+.arena{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center;min-height:150px}
+.hand{font-size:64px;line-height:1;transition:transform .2s}
+.hand.shake{animation:sh .45s ease}
+@keyframes sh{0%,100%{transform:translateY(0)}25%{transform:translateY(-14px)}50%{transform:translateY(0)}75%{transform:translateY(-8px)}}
+.who{font-size:12px;color:var(--dim);margin-top:6px}
+.vs{font-weight:800;color:var(--dim)}
+.lock{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;background:var(--pri2);color:var(--pri)}
+.res{text-align:center;font-size:22px;font-weight:800;min-height:34px}
+.res.w{color:var(--win)}.res.l{color:var(--lose)}.res.d{color:var(--draw)}
+.think{background:var(--pri2);border-radius:12px;padding:10px 12px;font-size:13.5px;min-height:46px}
+.picks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.picks button{border:2px solid var(--line);background:var(--card);border-radius:18px;padding:12px 0 8px;cursor:pointer;font:inherit;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:2px}
+.picks button b{font-size:44px;line-height:1.1;font-weight:400}.picks button span{font-size:13px;font-weight:700}
+.picks button:active{transform:scale(.96);border-color:var(--pri)}
+.picks button:disabled{opacity:.5}
+.prob{display:grid;grid-template-columns:28px 1fr 40px;gap:6px;align-items:center;font-size:13px;margin:3px 0}
+.prob .t{height:9px;border-radius:5px;background:var(--line);overflow:hidden}.prob .t i{display:block;height:100%;background:var(--pri);transition:width .3s}
+.prob .v{text-align:right;color:var(--dim);font-variant-numeric:tabular-nums}
+.hist{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.hist i{width:14px;height:14px;border-radius:4px;display:inline-block;background:var(--draw)}
+.hist i.w{background:var(--win)}.hist i.l{background:var(--lose)}
+svg{display:block;width:100%;height:auto}
+.big{font-size:44px;font-weight:800;text-align:center;line-height:1.1}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-top:10px}
+.kpi div{background:var(--bg);border-radius:12px;padding:10px 4px}.kpi b{display:block;font-size:20px}.kpi span{font-size:11.5px;color:var(--dim)}
+.edu p{margin:0 0 8px}.edu b{color:var(--pri)}
+.foot{text-align:center;font-size:11.5px;color:var(--dim);padding:6px 0 16px}
+</style></head>
+<body>
+<header><h1>나를 읽는 AI 가위바위보</h1><p>AI가 당신의 패턴을 학습합니다 · 30판 대결</p></header>
+<main>
+<section id="home">
+  <div class="card">
+    <h2>AI를 이길 수 있을까요?</h2>
+    <p style="margin:0 0 10px">사람은 아무렇게나 내는 것 같아도 <b>습관</b>이 있습니다. 이 AI는 당신이 지금까지 낸 순서를 기억하고, <b>다음에 낼 것을 예측</b>해서 이기는 손을 냅니다. 판이 거듭될수록 AI가 똑똑해지는 걸 지켜보세요.</p>
+    <div class="small dim" style="margin-bottom:6px">AI 수준 (기억하는 길이)</div>
+    <div class="seg" id="lvl"><button type="button" data-v="1">쉬움<br><small>1수 기억</small></button><button type="button" data-v="2" class="on">보통<br><small>2수 기억</small></button><button type="button" data-v="3">어려움<br><small>여러 전략 조합</small></button></div>
+    <button class="btn pri wide mt" id="startBtn" type="button">30판 대결 시작</button>
+    <p class="small dim mt" id="best" style="margin-bottom:0"></p>
+  </div>
+  <div class="card small dim">
+    <b style="color:var(--ink)">공정한 대결</b> — AI는 당신이 고르기 <b>전에</b> 이미 손을 정해 둡니다(🔒 표시). 당신의 선택을 보고 바꾸지 않습니다. 오직 지난 기록만으로 예측합니다.
+  </div>
+</section>
+
+<section id="game" hidden>
+  <div class="card">
+    <div class="score"><div><b id="sMe">0</b><span>나</span></div><div class="mid"><span id="sRound">1 / 30</span><br>무 <span id="sDraw">0</span></div><div><b id="sAi">0</b><span>AI</span></div></div>
+    <div class="prog"><i id="pBar"></i></div>
+  </div>
+  <div class="card">
+    <div class="arena"><div><div class="hand" id="hMe">❔</div><div class="who">나</div></div><div class="vs">VS</div><div><div class="hand" id="hAi">🤖</div><div class="who" id="aiState"><span class="lock">🔒 AI는 이미 냈습니다</span></div></div></div>
+    <div class="res" id="res"></div>
+    <div class="think" id="think">아직 기록이 없어 AI는 감으로 냅니다. 첫 판을 골라 보세요!</div>
+    <div class="picks mt" id="picks">
+      <button type="button" data-m="0"><b>✊</b><span>바위</span></button>
+      <button type="button" data-m="1"><b>✌️</b><span>가위</span></button>
+      <button type="button" data-m="2"><b>✋</b><span>보</span></button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>AI의 예측 <small class="dim" style="font-weight:400">— 방금 판에서 내가 낼 거라 본 확률</small></h2>
+    <div id="probs"></div>
+    <div class="hist" id="hist"></div>
+  </div>
+</section>
+
+<section id="end" hidden></section>
+<div class="foot">정필 수심명 · 나를 읽는 AI 가위바위보 v1.0 · 인터넷 없이 내 폰에서만 동작</div>
+</main>
+<script>
+(function(){
+"use strict";
+var E=["✊","✌️","✋"],N=["바위","가위","보"];
+/* m이 이기는 상대: 바위(0)>가위(1), 가위(1)>보(2), 보(2)>바위(0) → beats(x) = x를 이기는 손 */
+function beats(x){return (x+2)%3;}
+function outcome(me,ai){if(me===ai)return 0;return beats(ai)===me?1:-1;} /* 1 내가 승 */
+var ROUNDS=30,KEY="rpsAI_v1";
+var shownPred=null,level=2,hist=[],res=[],aiMove=0,aiPred=[1/3,1/3,1/3],aiWhy="",sc={me:0,ai:0,d:0},hits=0,busy=false,curve=[];
+var best={};try{best=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){}
+function $(i){return document.getElementById(i);}
+function buzz(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
+
+/* ===== 예측기들 =====
+   각 예측기는 지금까지의 기록으로 '사람이 다음에 낼 확률'을 내놓는다.
+   어려움 단계에서는 예측기마다 최근 적중 성적을 매겨 가장 잘 맞힌 것을 믿는다(앙상블). */
+function norm(c){var s=c[0]+c[1]+c[2];return s?[c[0]/s,c[1]/s,c[2]/s]:[1/3,1/3,1/3];}
+function freqPred(){var c=[1,1,1];hist.forEach(function(m){c[m]++;});return norm(c);}
+function markov(k,useRes){ /* 직전 k수(와 결과)가 같았던 때 다음에 무엇을 냈나 */
+  var c=[0.5,0.5,0.5],n=hist.length;if(n<k)return null;
+  var key=function(i){var s="";for(var j=i-k;j<i;j++)s+=hist[j]+(useRes?"/"+res[j]:"")+",";return s;};
+  var cur=key(n),found=0;
+  for(var i=k;i<n;i++){if(key(i)===cur){c[hist[i]]+=1;found++;}}
+  return found?norm(c):null;
+}
+var PREDS=[
+  {nm:"자주 내는 손",f:function(){return freqPred();}},
+  {nm:"직전 1수 패턴",f:function(){return markov(1,false);}},
+  {nm:"직전 2수 패턴",f:function(){return markov(2,false);}},
+  {nm:"이기고 진 뒤의 습관",f:function(){return markov(1,true);}},
+  {nm:"직전 3수 패턴",f:function(){return markov(3,false);}}
+];
+var pScore=PREDS.map(function(){return 0;}),pLast=PREDS.map(function(){return null;});
+function choose(){
+  var n=hist.length,use;
+  if(level===1)use=[0,1];else if(level===2)use=[0,1,2,3];else use=[0,1,2,3,4];
+  var bestI=-1,bestP=null,bestS=-1e9;
+  PREDS.forEach(function(p,i){var r=p.f();pLast[i]=r;if(!r||use.indexOf(i)<0)return;
+    var s=(level===3?pScore[i]:0)+(i===0?-0.2:0)+(level<3?i*0.01:0);
+    if(level<3){/* 쉬움·보통: 가장 긴 기억(정보가 있는 것)을 우선 */s=i;}
+    if(s>bestS){bestS=s;bestI=i;bestP=r;}});
+  if(!bestP){bestP=[1/3,1/3,1/3];bestI=-1;}
+  aiPred=bestP;
+  var mx=Math.max.apply(null,bestP),cand=[0,1,2].filter(function(m){return bestP[m]>=mx-1e-9;});
+  var guess=cand[Math.floor(Math.random()*cand.length)];
+  if(level===1&&Math.random()<0.25)guess=Math.floor(Math.random()*3); /* 쉬움은 가끔 실수 */
+  aiMove=beats(guess);
+  aiWhy=n===0?"아직 기록이 없어 AI는 감으로 냅니다.":(bestI<0?"아직 패턴을 찾지 못해 무작위에 가깝게 냅니다.":"AI 판단: <b>"+PREDS[bestI].nm+"</b>을 보니 다음엔 <b>"+N[guess]+"</b>("+Math.round(mx*100)+"%)를 낼 것 같다 → <b>"+N[aiMove]+"</b>를 냈습니다.");
+}
+function learn(m){ /* 결과가 나온 뒤 각 예측기 적중 여부로 점수 갱신 */
+  pLast.forEach(function(p,i){if(!p)return;var g=p.indexOf(Math.max.apply(null,p));pScore[i]=pScore[i]*0.85+(g===m?1:-0.5);});
+}
+
+/* ===== 진행 ===== */
+document.querySelectorAll("#lvl button").forEach(function(b){b.onclick=function(){level=+b.dataset.v;document.querySelectorAll("#lvl button").forEach(function(x){x.classList.toggle("on",x===b);});};});
+function showBest(){var t=["","쉬움","보통","어려움"],s=[1,2,3].filter(function(l){return best[l];}).map(function(l){return t[l]+" 최고 "+best[l].me+"승 "+best[l].ai+"패";});$("best").textContent=s.length?"내 기록: "+s.join(" · "):"";}
+showBest();
+function show(id){["home","game","end"].forEach(function(k){$(k).hidden=k!==id;});window.scrollTo(0,0);}
+$("startBtn").onclick=function(){shownPred=null;hist=[];res=[];sc={me:0,ai:0,d:0};hits=0;curve=[];pScore=PREDS.map(function(){return 0;});show("game");newRound();};
+function newRound(){
+  choose();busy=false;
+  $("hMe").textContent="❔";$("hAi").textContent="🤖";$("aiState").innerHTML='<span class="lock">🔒 AI는 이미 냈습니다</span>';
+  $("think").innerHTML=hist.length?"AI가 다음 수를 정했습니다. 무엇을 낼까요?":"아직 기록이 없어 AI는 감으로 냅니다. 첫 판을 골라 보세요!";
+  renderBoard();
+}
+function renderBoard(){
+  $("sMe").textContent=sc.me;$("sAi").textContent=sc.ai;$("sDraw").textContent=sc.d;
+  $("sRound").textContent=Math.min(hist.length+1,ROUNDS)+" / "+ROUNDS;$("pBar").style.width=(hist.length/ROUNDS*100)+"%";
+  var P=shownPred;
+  $("probs").innerHTML=P?[0,1,2].map(function(m){return '<div class="prob"><span>'+E[m]+'</span><span class="t"><i style="width:'+(P[m]*100).toFixed(0)+'%"></i></span><span class="v">'+Math.round(P[m]*100)+'%</span></div>';}).join("")+
+    '<p class="small dim" style="margin:6px 0 0">방금 판에서 AI가 예상한 당신의 수입니다. 막대가 한쪽으로 쏠릴수록 AI가 당신을 "읽고" 있다는 뜻입니다. (다음 판 예측은 공정하게 가려 둡니다 🔒)</p>':'<p class="small dim" style="margin:0">한 판을 하고 나면, AI가 그 판에서 당신의 수를 어떻게 예상했는지 보여 드립니다.</p>';
+  $("hist").innerHTML=res.map(function(r){return '<i class="'+(r===1?"w":r===-1?"l":"")+'" title=""></i>';}).join("");
+}
+document.querySelectorAll("#picks button").forEach(function(b){b.onclick=function(){
+  if(busy||hist.length>=ROUNDS)return;busy=true;var m=+b.dataset.m,thisWhy=aiWhy;shownPred=aiPred.slice();
+  $("hMe").textContent="✊";$("hAi").textContent="✊";$("hMe").className="hand shake";$("hAi").className="hand shake";
+  setTimeout(function(){
+    $("hMe").className="hand";$("hAi").className="hand";
+    $("hMe").textContent=E[m];$("hAi").textContent=E[aiMove];$("aiState").textContent="AI";
+    var o=outcome(m,aiMove),guessed=(aiMove+1)%3; /* AI가 예상한 내 수 */if(guessed===m)hits++;
+    learn(m);hist.push(m);res.push(o);
+    if(o===1){sc.me++;$("res").textContent="이겼다!";$("res").className="res w";buzz(30);}
+    else if(o===-1){sc.ai++;$("res").textContent="AI 승리";$("res").className="res l";buzz([20,40,20]);}
+    else{sc.d++;$("res").textContent="비김";$("res").className="res d";}
+    curve.push(sc.ai/(sc.me+sc.ai||1));
+    $("think").innerHTML=thisWhy+(guessed===m?' <b style="color:var(--lose)">예측 적중!</b>':' <span class="dim">예측 빗나감</span>');
+    renderBoard();
+    if(hist.length>=ROUNDS){setTimeout(finish,900);return;}
+    setTimeout(function(){$("res").textContent="";newRound();$("think").innerHTML="<span class='dim'>지난 판 — </span>"+thisWhy+"<br><b>다음 판: AI가 이미 손을 정했습니다 🔒</b>";},900);
+  },470);
+};});
+
+/* ===== 결과 ===== */
+function finish(){
+  var acc=Math.round(hits/ROUNDS*100),win=sc.me>sc.ai,tie=sc.me===sc.ai;
+  if(!best[level]||sc.me-sc.ai>best[level].me-best[level].ai){best[level]={me:sc.me,ai:sc.ai};try{localStorage.setItem(KEY,JSON.stringify(best));}catch(e){}}
+  var first=res.slice(0,10),last=res.slice(-10);
+  function aiRate(a){var w=a.filter(function(x){return x===-1;}).length,l=a.filter(function(x){return x===1;}).length;return w+l?Math.round(w/(w+l)*100):0;}
+  var r1=aiRate(first),r3=aiRate(last);
+  var cnt=[0,0,0];hist.forEach(function(m){cnt[m]++;});var fav=cnt.indexOf(Math.max.apply(null,cnt));
+  var rep=0;for(var i=1;i<hist.length;i++)if(hist[i]===hist[i-1])rep++;
+  /* 그래프 */
+  var W=320,H=120,pl=26,pr=6,pt=8,pb=18,iw=W-pl-pr,ih=H-pt-pb;
+  var g='<svg viewBox="0 0 '+W+' '+H+'"><line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+(pt+ih/2)+'" y2="'+(pt+ih/2)+'" stroke="currentColor" stroke-opacity=".25" stroke-dasharray="4 4"/>'+
+    '<text x="'+(pl-4)+'" y="'+(pt+4)+'" font-size="10" text-anchor="end" fill="currentColor" fill-opacity=".6">100</text><text x="'+(pl-4)+'" y="'+(pt+ih/2+3)+'" font-size="10" text-anchor="end" fill="currentColor" fill-opacity=".6">50</text><text x="'+(pl-4)+'" y="'+(pt+ih)+'" font-size="10" text-anchor="end" fill="currentColor" fill-opacity=".6">0</text>';
+  var path=curve.map(function(v,i){return (i?"L":"M")+(pl+iw*i/(ROUNDS-1)).toFixed(1)+","+(pt+ih*(1-v)).toFixed(1);}).join("");
+  g+='<path d="'+path+'" fill="none" stroke="var(--pri)" stroke-width="2.5" stroke-linejoin="round"/>';
+  [0,9,19,29].forEach(function(i){g+='<text x="'+(pl+iw*i/(ROUNDS-1)).toFixed(1)+'" y="'+(H-4)+'" font-size="10" text-anchor="middle" fill="currentColor" fill-opacity=".6">'+(i+1)+'판</text>';});
+  g+='</svg>';
+  var lv=["","쉬움","보통","어려움"][level];
+  var h='<div class="card"><div class="small dim" style="text-align:center">'+lv+' AI와 30판 결과</div><div class="big" style="color:'+(win?"var(--win)":tie?"var(--dim)":"var(--lose)")+'">'+(win?"당신의 승리!":tie?"무승부":"AI의 승리")+'</div>'+
+    '<div class="kpi"><div><b>'+sc.me+'</b><span>나</span></div><div><b>'+sc.d+'</b><span>무</span></div><div><b>'+sc.ai+'</b><span>AI</span></div></div>'+
+    '<div class="kpi"><div><b>'+acc+'%</b><span>AI 예측 적중률</span></div><div><b>'+r1+'%</b><span>처음 10판 AI 승률</span></div><div><b>'+r3+'%</b><span>마지막 10판 AI 승률</span></div></div></div>';
+  h+='<div class="card"><h2>AI 승률 변화 <small class="dim" style="font-weight:400">승부가 난 판 기준</small></h2><div style="color:var(--dim)">'+g+'</div><p class="small dim" style="margin:4px 0 0">점선(50%)보다 위로 올라가면 AI가 당신의 패턴을 잡아낸 것입니다. 무작위로 내는 상대라면 적중률은 33% 근처에 머뭅니다.</p></div>';
+  h+='<div class="card"><h2>AI가 본 당신의 습관</h2><p style="margin:0 0 6px">가장 많이 낸 손: <b>'+E[fav]+' '+N[fav]+'</b> ('+cnt[fav]+'번 / 30)</p><p style="margin:0">같은 손을 연달아 낸 횟수: <b>'+rep+'번</b> <span class="dim">(완전 무작위라면 약 10번)</span></p></div>';
+  h+='<div class="card edu"><h2>AI는 어떻게 예측했을까?</h2>'+
+    '<p>이 AI는 정답을 미리 아는 게 아니라, 당신이 낸 <b>기록(데이터)</b>에서 "이런 상황 다음엔 이걸 냈다"는 <b>패턴을 학습</b>합니다. 통계에서는 이것을 <b>마르코프 연쇄</b>라고 부릅니다.</p>'+
+    '<p>어려움 단계는 여러 예측 방법(자주 내는 손, 직전 1·2·3수 패턴, 이기고 진 뒤의 습관)을 동시에 돌리고, 최근에 <b>가장 잘 맞힌 방법을 더 믿습니다</b>. 여러 모델을 함께 쓰는 <b>앙상블</b>의 원리입니다.</p>'+
+    '<p style="margin:0">추천 영상·쇼핑 추천·문자 자동완성도 같은 원리입니다. 우리의 지난 선택이 다음 예측의 재료가 됩니다. 그래서 <b>데이터가 쌓일수록 AI는 나를 더 잘 압니다</b>.</p></div>';
+  h+='<div class="card"><button class="btn pri wide" id="again" type="button">다시 대결</button><button class="btn wide mt" id="toHome" type="button">AI 수준 바꾸기</button><button class="btn wide mt" id="share" type="button">결과 복사하기</button></div>';
+  $("end").innerHTML=h;show("end");showBest();
+  $("again").onclick=function(){$("startBtn").click();};
+  $("toHome").onclick=function(){show("home");};
+  $("share").onclick=function(){var t="[나를 읽는 AI 가위바위보] "+lv+" AI와 30판: 나 "+sc.me+"승 / AI "+sc.ai+"승 / 무 "+sc.d+" · AI 예측 적중률 "+acc+"%\n"+location.href.split("#")[0];
+    var b=this;if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){b.textContent="복사했어요!";setTimeout(function(){b.textContent="결과 복사하기";},1800);});};
+}
+window.__rps={outcome:outcome,beats:beats};
+})();
+</script>
+</body></html>
